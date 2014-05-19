@@ -1,3 +1,17 @@
 *.dSYM
 kqueue
 *.swp
+CMakeCache.txt
+Makefile
+cmake_install.cmake
+CMakeFiles
+2.8.12.2
+CMakeDirectoryInformation.cmake
+CMakeOutput.log
+CMakeTmp
+Makefile.cmake
+Makefile2
+TargetDirectories.txt
+cmake.check_cache
+kqueue.dir
+progress.marks
