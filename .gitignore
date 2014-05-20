@@ -1,4 +1,5 @@
 .DS_Store
+build
 *.dSYM
 kqueue
 *.swp
@@ -7,6 +8,7 @@ Makefile
 cmake_install.cmake
 CMakeFiles
 2.8.12.2
+libuv_vendor-prefix
 CMakeDirectoryInformation.cmake
 CMakeOutput.log
 CMakeTmp
