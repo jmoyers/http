@@ -7,12 +7,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY build)
 project (multiplexers)
 
 project (kqueue)
-file( GLOB KQUEUE_SRCS src/kqueue/*.c src/kqueue/*.h )
+file( GLOB KQUEUE_SRCS kqueue.c )
 add_executable( kqueue ${KQUEUE_SRCS} )
 
 project (uvs)
 
-file( GLOB UVS_SRCS src/uv/*.c src/uv/*.h )
+file( GLOB UVS_SRCS uv.c )
 
 include_directories(${CMAKE_SOURCE_DIR}/build/vendor/libuv/include)
 
