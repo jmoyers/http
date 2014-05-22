@@ -1,4 +1,6 @@
 *.deps*
+tcp
+*node_modules*
 *.swo
 .DS_Store
 build

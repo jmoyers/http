@@ -10,6 +10,7 @@
 #include <inttypes.h>
 #include <fcntl.h>
 #include "log.h"
+#include "parser.cpp"
 
 namespace Multiplexer
 {
@@ -91,7 +92,8 @@ namespace Multiplexer
 
   int Server::bind()
   {
-    int err = ::bind(m_sock, (struct sockaddr *) &m_address, sizeof(m_address));
+    int err = ::bind(m_sock, (struct sockaddr *) &m_address, 
+        sizeof(m_address));
 
     if (err < 0)
     {
@@ -149,7 +151,7 @@ namespace Multiplexer
 
   void Server::run()
   {
-    if (setupRun() < 0)
+    if (setupRun() < 0 && m_sock_state == LISTENING)
     {
       ERR("aborting run loop");
       return;
@@ -188,12 +190,14 @@ namespace Multiplexer
 
   int Server::onClientConnect(struct kevent& event)
   {
-    DEB("[0x%016" PRIXPTR "] client connect", event.ident);
     int client_sock = ::accept(event.ident, NULL, NULL);
+
+    DEB("[0x%016" PRIXPTR "] client connect", (unsigned long) client_sock);
 
     if (client_sock < 0)
     {
-      ERR("accept: %s", strerror(errno));
+      ERR("[0x%016" PRIXPTR "] client connect: %s", event.ident, 
+          strerror(errno));
     }
 
     fcntl(client_sock, F_SETFL, O_NONBLOCK);
@@ -211,7 +215,7 @@ namespace Multiplexer
 
   int Server::onClientDisconnect(struct kevent& event)
   {
-    DEB("[ox%016" PRIXPTR "] disconnected", event.ident);
+    DEB("[0x%016" PRIXPTR "] client disconnect", event.ident);
 
     EV_SET(&m_event_subs, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 
@@ -227,7 +231,7 @@ namespace Multiplexer
 
   void Server::onRead(struct kevent& event)
   {
-    DEB("[0x%016" PRIXPTR "] onread", event.ident);
+    DEB("[0x%016" PRIXPTR "] client read", event.ident);
 
     const char *response = "HTTP/1.1 200 OK\n"
       "Content-Type: text/html;\n\n"
@@ -235,13 +239,22 @@ namespace Multiplexer
 
     int response_size = strlen(response) * sizeof(char);
 
-    int bytes_read = recv(event.ident, m_receive_buf, sizeof(m_receive_buf), 0);
+    int bytes_read = recv(event.ident, m_receive_buf, 
+        sizeof(m_receive_buf) - 1, 0);
 
     if (bytes_read <= 0)
     {
-      ERR("[0x%016" PRIXPTR "] receive: %s", event.ident, strerror(errno));
+      ERR("[0x%016" PRIXPTR "] client receive: %s", event.ident, 
+          strerror(errno));
       return;
     }
+
+    m_receive_buf[bytes_read] = '\0';
+
+    DEB("%s", m_receive_buf);
+
+    Parser p(m_receive_buf, bytes_read);
+    p.start();
 
     int bytes_sent = send(event.ident, response, response_size, 0);
 
@@ -250,7 +263,7 @@ namespace Multiplexer
 
   void Server::onEOF(struct kevent& event)
   {
-    DEB("[0x%016" PRIXPTR "] eof", event.ident);
+    DEB("[0x%016" PRIXPTR "] client eof", event.ident);
 
     onClientDisconnect(event);
   }
