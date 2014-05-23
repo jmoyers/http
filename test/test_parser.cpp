@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "../parser.h"
-#include  "../headers.h"
+#include "../headers.h"
 
 using namespace Multiplexer;
 
