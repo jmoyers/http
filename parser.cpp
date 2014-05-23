@@ -91,18 +91,18 @@ namespace Multiplexer
       case 'C': m_headers->setMethod(Headers::CONNECT); m_index+=8; break;
     }
 
-    if (m_headers->getMethod() == Headers::Method::NONE)
+    if (m_headers->getMethod() == Headers::NONE)
     {
-      ERR("bad http method: %c", c());
+      ERR("bad http method: %c", curr());
       m_state = BROKEN;
     }
     else
     {
       DEB("http method: %d", (int) m_headers->getMethod());
-      DEB("  get: %d", GET);
-      DEB("  post: %d", POST);
-      DEB("  put: %d", PUT);
-      DEB("  delete: %d", DELETE);
+      DEB("  get: %d", Headers::GET);
+      DEB("  post: %d", Headers::POST);
+      DEB("  put: %d", Headers::PUT);
+      DEB("  delete: %d", Headers::DELETE);
       m_state = PATH;
     }
   }
