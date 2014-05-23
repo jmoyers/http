@@ -1,4 +1,6 @@
 *.deps*
+vendor/gtest
+test_parser
 tcp
 *node_modules*
 *.swo

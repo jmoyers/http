@@ -1,4 +1,5 @@
 #include <string>
+#include "log.h"
 #include "headers.h"
 
 namespace Multiplexer
@@ -13,32 +14,32 @@ namespace Multiplexer
       enum State
       {
         BROKEN,
+        PAUSED,
         METHOD,
         PATH,
         VERSION,
         FIELD,
-        VALUE,
         DONE
       };
 
       State m_state;
-      Headers *m_headers;
+      std::shared_ptr<Headers> m_headers;
 
       Parser(const char *buffer, int size);
-      ~Parser();
 
       void parseMethod();
       void parsePath();
       void parseVersion();
       void parseField();
-      void parseValue();
 
       // convenience
       char curr();
       char next();
       char prev();
 
-      void start();
+      void run();
+
+      std::shared_ptr<Headers> getHeaders() { return m_headers; }
   };
 
   Parser::Parser(const char *buffer, int size) :
@@ -47,10 +48,10 @@ namespace Multiplexer
     m_buffer_size(size),
     m_state(METHOD)
   {
-    m_headers = new Headers();
+    m_headers = std::make_shared<Headers>();
   }
 
-  void Parser::start()
+  void Parser::run()
   {
     DEB("%s", m_buffer);
 
@@ -62,9 +63,8 @@ namespace Multiplexer
         case PATH:    parsePath();    break;
         case VERSION: parseVersion(); break;
         case FIELD:   parseField();   break;
-        case VALUE:   parseValue();   break;
         default: 
-          ERR("parser broken");
+          DEB("parser stopped");
           return; 
           break;
       }
@@ -91,7 +91,7 @@ namespace Multiplexer
       case 'C': m_headers->setMethod(Headers::CONNECT); m_index+=8; break;
     }
 
-    if (m_headers->getMethod() == Headers::NONE)
+    if (m_headers->getMethod() == Headers::NOMETHOD)
     {
       ERR("bad http method: %c", curr());
       m_state = BROKEN;
@@ -109,8 +109,8 @@ namespace Multiplexer
 
   void Parser::parsePath()
   {
-    const char *curr = m_buffer + m_index;
-    const char *newline = strchr(curr, '\n');
+    const char *c = m_buffer + m_index;
+    const char *newline = strchr(c, '\n');
 
     if (newline == NULL)
     {
@@ -118,7 +118,7 @@ namespace Multiplexer
       return;
     }
 
-    m_index = (newline - curr) + 1;
+    m_index = (newline - m_buffer) + 1;
     m_state = FIELD;
   }
 
@@ -140,7 +140,6 @@ namespace Multiplexer
    */
   void Parser::parseField()
   {
-
     const char *curr = m_buffer + m_index;
     const char *delim = strchr(curr, ':');
 
@@ -173,7 +172,8 @@ namespace Multiplexer
       return;
     }
 
-    std::string value(curr, newline - curr);
+    int cr_offset = *(newline - 1) == '\r' ? 1 : 0;
+    std::string value(curr, newline - curr - cr_offset);
 
     DEB("field: %s", field.c_str());
     DEB("value: %s", value.c_str());
@@ -182,11 +182,6 @@ namespace Multiplexer
 
     curr = newline + 1;
     m_index = curr - m_buffer;
-  }
-
-  void Parser::parseValue()
-  {
-    m_index++;
   }
 
   inline char Parser::curr()
@@ -212,10 +207,5 @@ namespace Multiplexer
     }
 
     return '\0';
-  }
-
-  Parser::~Parser()
-  {
-    delete m_headers;
   }
 }

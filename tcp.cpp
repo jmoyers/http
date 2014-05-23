@@ -10,7 +10,7 @@
 #include <inttypes.h>
 #include <fcntl.h>
 #include "log.h"
-#include "parser.cpp"
+#include "parser.h"
 
 namespace Multiplexer
 {
