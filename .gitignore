@@ -1,4 +1,5 @@
 *.deps*
+vendor/sha1
 vendor/gtest
 test_parser
 tcp
