@@ -254,7 +254,7 @@ namespace Multiplexer
     DEB("%s", m_receive_buf);
 
     Parser p(m_receive_buf, bytes_read);
-    p.start();
+    p.run();
 
     int bytes_sent = send(event.ident, response, response_size, 0);
 

@@ -99,10 +99,6 @@ namespace Multiplexer
     else
     {
       DEB("http method: %d", (int) m_headers->getMethod());
-      DEB("  get: %d", Headers::GET);
-      DEB("  post: %d", Headers::POST);
-      DEB("  put: %d", Headers::PUT);
-      DEB("  delete: %d", Headers::DELETE);
       m_state = PATH;
     }
   }

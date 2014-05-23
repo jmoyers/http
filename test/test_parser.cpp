@@ -24,7 +24,7 @@ TEST(ParserTests, Basic)
   EXPECT_EQ(h->getUpgrade(), Headers::Upgrade::NOUPGRADE);
 }
 
-TEST(ParserTests, Websockets)
+TEST(ParserTests, WebSockets)
 {
   const char *request = 
     "GET /chat HTTP/1.1\r\n"
