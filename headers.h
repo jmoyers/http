@@ -2,6 +2,7 @@
 #define __HEADERS_H
 
 #include <string>
+#include <algorithm>
 #include <map>
 
 namespace Multiplexer
@@ -51,12 +52,14 @@ namespace Multiplexer
       
       void setField(std::string name, std::string value) 
       {
+        // http://goo.gl/gEA0Tn
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
         m_fields[name] = value;
       }
 
       Upgrade getUpgrade() 
       { 
-        if (m_fields["Upgrade"] == "websocket")
+        if (m_fields["upgrade"] == "websocket")
         {
           return WEBSOCKET;
         }
