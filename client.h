@@ -1,4 +1,4 @@
-class Peer
+class Client
 {
   int m_sock;
   struct sockaddr m_addr;
