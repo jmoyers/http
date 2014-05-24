@@ -6,6 +6,7 @@
 
 networking api notes
 
+```
 server
   subscribe
     client connect
@@ -40,3 +41,4 @@ server
         flags & EV_EOF
         currently we close()
         event: client disconnect - client
+```
