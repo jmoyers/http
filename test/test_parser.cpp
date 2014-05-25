@@ -2,8 +2,6 @@
 #include "../parser.h"
 #include "../headers.h"
 
-using namespace Multiplexer;
-
 TEST(ParserTests, Basic)
 {
   const char *request = 
@@ -21,7 +19,7 @@ TEST(ParserTests, Basic)
   EXPECT_EQ(h->getField("host"), "localhost:8080");
   EXPECT_EQ(h->getField("user-agent"), "ApacheBench/2.3");
   EXPECT_EQ(h->getField("accept"), "*/*");
-  EXPECT_EQ(h->getUpgrade(), Headers::Upgrade::NOUPGRADE);
+  EXPECT_EQ(h->getUpgrade(), Headers::Upgrade::NONE);
 }
 
 TEST(ParserTests, WebSockets)
