@@ -176,13 +176,6 @@ void Server::onRead(struct kevent& event)
 {
   DEBUG("[0x%016" PRIXPTR "] client read", event.ident);
 
-  const char *response = 
-    "HTTP/1.1 200 OK\n"
-    "Content-Type: text/html;\n\n"
-    "Hello world!";
-
-  int response_size = strlen(response) * sizeof(char);
-
   int bytes_read = recv(event.ident, m_receive_buf, 
       sizeof(m_receive_buf) - 1, 0);
 
@@ -200,7 +193,20 @@ void Server::onRead(struct kevent& event)
   Parser p(m_receive_buf, bytes_read);
   p.run();
 
-  int bytes_sent = send(event.ident, response, response_size, 0);
+  std::string response;
+
+  if (p.getHeaders()->getMethod() == Headers::Method::NONE)
+  {
+    response += "HTTP/1.1 400 Bad Request\r\n";
+  }
+  else
+  {
+    // Intentional. See if it even shows up on profiles.
+    response += "HTTP/1.1 200 OK\r\n";
+    response += "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+  }
+
+  int bytes_sent = send(event.ident, response.c_str(), response.size(), 0);
 
   event.flags |= EV_EOF;
 }
