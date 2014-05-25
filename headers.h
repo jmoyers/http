@@ -8,9 +8,9 @@
 class Headers
 {
   public:
-    enum Method
+    enum class Method
     {
-      NOMETHOD,
+      NONE,
       GET,
       HEAD,
       POST,
@@ -22,9 +22,10 @@ class Headers
       PATCH
     };
 
-    enum Upgrade
+    enum class Upgrade
     {
-      NOUPGRADE,
+      NONE,
+      TLS,
       WEBSOCKET
     };
 
@@ -36,19 +37,19 @@ class Headers
     } Version;
 
     Headers() : 
-      m_upgrade(NOUPGRADE),
-      m_method(NOMETHOD),
+      m_upgrade(Upgrade::NONE),
+      m_method(Method::NONE),
       m_path(),
       m_http_version{0, 0, 0},
       m_fields()
     {}
 
-    std::string getField(std::string name) 
+    std::string& getField(std::string name) 
     { 
       return m_fields[name]; 
     }
     
-    void setField(std::string name, std::string value) 
+    void setField(std::string &name, const std::string &value) 
     {
       // http://goo.gl/gEA0Tn
       std::transform(name.begin(), name.end(), name.begin(), ::tolower);
@@ -59,10 +60,10 @@ class Headers
     { 
       if (m_fields["upgrade"] == "websocket")
       {
-        return WEBSOCKET;
+        return Upgrade::WEBSOCKET;
       }
 
-      return NOUPGRADE;
+      return Upgrade::NONE;
     }
 
     Method getMethod() { return m_method; }

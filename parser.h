@@ -8,11 +8,19 @@
 class Parser
 {
   public:
+    Parser(const char *buffer, int size);
+    Parser(Parser  &p) = delete;
+    Parser(Parser &&p) = delete;
+
+    void run();
+
+    std::shared_ptr<Headers> getHeaders() { return m_headers; }
+  private:
     const char *m_buffer;
     int m_buffer_size;
     int m_index;
 
-    enum State
+    enum class State
     {
       BROKEN,
       PAUSED,
@@ -26,21 +34,16 @@ class Parser
     State m_state;
     std::shared_ptr<Headers> m_headers;
 
-    Parser(const char *buffer, int size);
-
     void parseMethod();
     void parsePath();
     void parseVersion();
     void parseField();
 
     // convenience
-    char curr();
-    char next();
-    char prev();
+    inline const char & curr();
+    inline const char & next();
+    inline const char & prev();
 
-    void run();
-
-    std::shared_ptr<Headers> getHeaders() { return m_headers; }
 };
 
 #endif /** __PARSER_H **/

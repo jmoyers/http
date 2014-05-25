@@ -13,32 +13,43 @@ server
     client disconnect
     read
   transport (tcp) - support n. ideally tcp, udp with kqueue/epoll/completion 
-    api
-      clients
+    socket (listening)
+      socketstate
+      descriptor
 
+    bind 
+    listen
+
+    subscribe
       events - n listeners
         client connect
         client disconnect
         read
 
-      send
-      close
-      shutdown
-      bind
-      listen
+    clients
+      address
+      socket
+        socketstate
+        descriptor
 
-    kqueue loop
-      client connect << notified a new client connecting
-        call accept: get new client
-          socket descriptor
-          address
-        notify: client connect - client
-      read << notified of new data available on descriptor
-        get socket from kqueue
-        call recv
-        event: read - client, data, length
-      eof << notified of eof received on descriptor
-        flags & EV_EOF
-        currently we close()
-        event: client disconnect - client
+    send - data, length, client
+    close - client
+    shutdown - client
+
+    run
+      kqueue loop
+        client connect << notified a new client connecting
+          call accept: get new client
+            socket descriptor
+            address
+          notify: client connect - client
+        read << notified of new data available on descriptor
+          get socket from kqueue
+          call recv
+          event: read - client, data, length
+        eof << notified of eof received on descriptor
+          flags & EV_EOF
+          currently we close()
+          event: client disconnect - client
+
 ```

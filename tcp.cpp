@@ -135,7 +135,7 @@ int Server::onClientConnect(struct kevent& event)
 {
   int client_sock = ::accept(event.ident, NULL, NULL);
 
-  DEB("[0x%016" PRIXPTR "] client connect", (unsigned long) client_sock);
+  DEBUG("[0x%016" PRIXPTR "] client connect", (unsigned long) client_sock);
 
   if (client_sock < 0)
   {
@@ -158,7 +158,7 @@ int Server::onClientConnect(struct kevent& event)
 
 int Server::onClientDisconnect(struct kevent& event)
 {
-  DEB("[0x%016" PRIXPTR "] client disconnect", event.ident);
+  DEBUG("[0x%016" PRIXPTR "] client disconnect", event.ident);
 
   EV_SET(&m_event_subs, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
 
@@ -174,7 +174,7 @@ int Server::onClientDisconnect(struct kevent& event)
 
 void Server::onRead(struct kevent& event)
 {
-  DEB("[0x%016" PRIXPTR "] client read", event.ident);
+  DEBUG("[0x%016" PRIXPTR "] client read", event.ident);
 
   const char *response = 
     "HTTP/1.1 200 OK\n"
@@ -195,7 +195,7 @@ void Server::onRead(struct kevent& event)
 
   m_receive_buf[bytes_read] = '\0';
 
-  DEB("%s", m_receive_buf);
+  DEBUG("%s", m_receive_buf);
 
   Parser p(m_receive_buf, bytes_read);
   p.run();
@@ -207,7 +207,7 @@ void Server::onRead(struct kevent& event)
 
 void Server::onEOF(struct kevent& event)
 {
-  DEB("[0x%016" PRIXPTR "] client eof", event.ident);
+  DEBUG("[0x%016" PRIXPTR "] client eof", event.ident);
 
   onClientDisconnect(event);
 }

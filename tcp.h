@@ -22,6 +22,8 @@ class Server
         const char *addr = "0.0.0.0", 
         const int port = 8080, 
         const int backlog = 1000);
+    Server(Server &s) = delete;
+    Server(Server &&s) = delete;
     ~Server();
 
     void onRead(struct kevent& event);
