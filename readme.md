@@ -175,10 +175,22 @@ client
   ? recv
 
 event - abstract kqueue events, api compatible with epoll
+  subscriber
+    std::function(client, flags)
   client
   flags
 
-event
-  std::function(client, stream_in, stream_out)
+performance
+  tools
+    gperftools (google) - http://goo.gl/GKT8D7
+  slab allocators
+    why?
+      still reading
+    "Memory Allocation for Long-Running..." - http://goo.gl/IRME5u
+    jemalloc (canonware) - http://goo.gl/4wYkgS
+    jemalloc (facebook) - http://goo.gl/DX79Yk
+    jemalloc tech talk - http://goo.gl/2YLWTx
+    tcmalloc (google) - http://goo.gl/GKT8D7
+
 
 ```
