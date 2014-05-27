@@ -135,6 +135,11 @@ buffer
           good for holding unicode
           wchar_t = 2 bytes on windows, 4 byte on linux
           wchar_t is not tied to unicode, but guarantees storage
+        bool
+          has a specialization for extremely compact storage
+          http://www.cplusplus.com/reference/vector/vector-bool/
+          not good for processing
+          variable size bitset
       pros
         .reserve() and .resize() make it resizable
         bounds checking
