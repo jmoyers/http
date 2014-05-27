@@ -189,8 +189,9 @@ performance
     "Memory Allocation for Long-Running..." - http://goo.gl/IRME5u
     jemalloc (canonware) - http://goo.gl/4wYkgS
     jemalloc (facebook) - http://goo.gl/DX79Yk
-    jemalloc tech talk - http://goo.gl/2YLWTx
+    jemalloc tech talk - http://goo.gl/2YLWTx, alt: http://goo.gl/fsdZ3n
     tcmalloc (google) - http://goo.gl/GKT8D7
+    data locality - http://goo.gl/y6SsFi
 
 
 ```
