@@ -1,5 +1,6 @@
 #include "tcp.h"
 
 int main() {
-  (new Server())->run();
+  Server s;
+  s.run();
 }

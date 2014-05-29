@@ -177,8 +177,6 @@ client
 event - abstract kqueue events, api compatible with epoll
   subscriber
     std::function(client, flags)
-  client
-  flags
 
 performance
   tools
@@ -192,6 +190,6 @@ performance
     jemalloc tech talk - http://goo.gl/2YLWTx, alt: http://goo.gl/fsdZ3n
     tcmalloc (google) - http://goo.gl/GKT8D7
     data locality - http://goo.gl/y6SsFi
-
-
+    locality of reference - http://goo.gl/tyk6uV
+    "Memory allocator microbenchmark results are notoriously difficult to extrapolate to real-world applications"
 ```

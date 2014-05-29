@@ -12,7 +12,7 @@ Parser::Parser(const char *buffer, int size) :
 void Parser::run()
 {
   DEBUG("%s", m_buffer);
-
+  
   while (m_index < m_buffer_size)
   {
     switch (m_state)

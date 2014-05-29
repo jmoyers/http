@@ -35,7 +35,7 @@ Server::Server(const char *addr, int port, int backlog) :
 
 int Server::bind()
 {
-  int err = ::bind(m_sock, (struct sockaddr *) &m_address, 
+  int err = ::bind(m_sock, (struct sockaddr *) &m_address,
       sizeof(m_address));
 
   if (err < 0)
