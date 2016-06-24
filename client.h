@@ -1,10 +1,25 @@
+#include <inttypes.h>
+//#include "buffer.h"
+#include <vector>
+
+using Buffer = vector<uint8_t>;
+
 class Client
 {
-  int m_sock;
-  struct sockaddr m_addr;
+  struct sockaddr m_addrress;
+  int m_socket;
+
+  Transport *m_transport;
+
+  Buffer m_receive_buffer;
 
   Peer() : 
-    m_addr(),
-    m_sock
+    m_address(),
+    m_socket,
+    m_transport,
+    m_subscribers
   {}
+
+  int send(Buffer &send_buffer, int size);
+  int receive();
 }
