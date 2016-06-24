@@ -1,5 +1,5 @@
-#ifndef __TCP_H
-#define __TCP_H
+#ifndef __SERVER_H
+#define __SERVER_H
 
 #include <string>
 #include <unordered_map>
@@ -66,4 +66,4 @@ class Server
     std::unordered_map<std::string, std::string> m_clients;
 };
 
-#endif /** __TCP_H **/
+#endif /** __SERVER_H **/
