@@ -11,7 +11,7 @@ go_bandit([]()
   {
     it("should parse a basic get request", []()
     {
-      const char *request = 
+      const char request[] = 
         "GET / HTTP/1.0\r\n"
         "Host: localhost:8080\r\n"
         "User-Agent: ApacheBench/2.3\r\n"
@@ -31,7 +31,7 @@ go_bandit([]()
 
     it("should be able to parse a websocket GET request", []()
     {
-      const char *request = 
+      const char request[] = 
         "GET /chat HTTP/1.1\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
