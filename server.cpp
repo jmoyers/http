@@ -1,5 +1,8 @@
 #include "server.h"
 
+namespace Http
+{
+
 Server::Server(const char *addr, int port, int backlog) :
   m_address(),
   m_sock(),
@@ -191,7 +194,7 @@ void Server::onRead(struct kevent& event)
   DEBUG("%s", m_receive_buf);
 
   Parser p(m_receive_buf, bytes_read);
-  p.run();
+  p.parse();
 
   std::string response;
 
@@ -234,3 +237,5 @@ Server::~Server()
 {
   if (m_sock_state == LISTENING) close();
 }
+
+} // namepsace

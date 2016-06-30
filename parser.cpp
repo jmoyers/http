@@ -1,6 +1,9 @@
 #include "parser.h"
 
-Parser::Parser(const char *buffer, int size) :
+namespace Http
+{
+
+Parser::Parser(const char *buffer, size_t size) :
   m_index(),
   m_buffer(buffer),
   m_buffer_size(size),
@@ -9,7 +12,7 @@ Parser::Parser(const char *buffer, int size) :
   m_headers = std::make_shared<Headers>();
 }
 
-void Parser::run()
+Parser::State Parser::parse()
 {
   DEBUG("%s", m_buffer);
   
@@ -17,19 +20,21 @@ void Parser::run()
   {
     switch (m_state)
     {
-      case State::METHOD:  parseMethod();  break;
-      case State::PATH:    parsePath();    break;
-      case State::VERSION: parseVersion(); break;
-      case State::FIELD:   parseField();   break;
+      case State::METHOD:  parse_method();  break;
+      case State::PATH:    parse_path();    break;
+      case State::VERSION: parse_version(); break;
+      case State::FIELD:   parse_field();   break;
       default: 
         DEBUG("parser stopped");
-        return; 
+        return m_state;
         break;
     }
   }
+
+  return m_state;
 }
 
-void Parser::parseMethod()
+void Parser::parse_method()
 {
   switch (curr())
   {
@@ -61,7 +66,7 @@ void Parser::parseMethod()
   }
 }
 
-void Parser::parsePath()
+void Parser::parse_path()
 {
   const char *c = m_buffer + m_index;
   const char *newline = strchr(c, '\n');
@@ -76,7 +81,7 @@ void Parser::parsePath()
   m_state = State::FIELD;
 }
 
-void Parser::parseVersion()
+void Parser::parse_version()
 {
   m_index++;
 }
@@ -92,7 +97,7 @@ void Parser::parseVersion()
  * 
  * BROKEN on null terminator
  */
-void Parser::parseField()
+void Parser::parse_field()
 {
   const char *curr = m_buffer + m_index;
   const char *delim = strchr(curr, ':');
@@ -155,10 +160,7 @@ inline const char & Parser::next()
 
 inline const char & Parser::prev()
 {
-  if (m_index-1 >= 0)
-  {
-    return m_buffer[m_index-1];
-  }
-  
-  return m_buffer[m_buffer_size];
+  return m_buffer[m_index-1];
 }
+
+} // namespace

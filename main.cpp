@@ -1,6 +1,6 @@
 #include "server.h"
 
 int main() {
-  Server s;
+  Http::Server s;
   s.run();
 }

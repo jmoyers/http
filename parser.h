@@ -5,25 +5,15 @@
 #include "log.h"
 #include "headers.h"
 
+namespace Http
+{
+
 class Parser
 {
   public:
-    Parser(const char *buffer, int size);
-    Parser(Parser  &p) = delete;
-    Parser(Parser &&p) = delete;
-
-    void run();
-
-    std::shared_ptr<Headers> getHeaders() { return m_headers; }
-  private:
-    const char *m_buffer;
-    int m_buffer_size;
-    int m_index;
-
     enum class State
     {
       BROKEN,
-      PAUSED,
       METHOD,
       PATH,
       VERSION,
@@ -31,19 +21,32 @@ class Parser
       DONE
     };
 
+    Parser(const char *buffer, size_t size);
+    Parser(Parser  &p) = delete;
+    Parser(Parser &&p) = delete;
+
+    State parse();
+
+    std::shared_ptr<Headers> getHeaders() { return m_headers; }
+  protected:
     State m_state;
+    const char *m_buffer;
+    size_t m_buffer_size;
+    size_t m_index;
+
     std::shared_ptr<Headers> m_headers;
 
-    void parseMethod();
-    void parsePath();
-    void parseVersion();
-    void parseField();
+    void parse_method();
+    void parse_path();
+    void parse_version();
+    void parse_field();
 
-    // convenience
     inline const char & curr();
     inline const char & next();
     inline const char & prev();
 
-};
+}; // class
+
+}  // namespace
 
 #endif /** __PARSER_H **/

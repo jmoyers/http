@@ -15,6 +15,9 @@
 #include "log.h"
 #include "parser.h"
 
+namespace Http
+{
+
 class Server
 {
   public:
@@ -34,8 +37,8 @@ class Server
 
     void run();
   private:
-    int bind();
     int listen();
+    int bind();
     int shutdown();
     int close();
 
@@ -65,5 +68,7 @@ class Server
 
     std::unordered_map<std::string, std::string> m_clients;
 };
+
+} // namspace
 
 #endif /** __SERVER_H **/
