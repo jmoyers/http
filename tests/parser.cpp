@@ -35,16 +35,10 @@ go_bandit([]()
         "GET /chat HTTP/1.1\r\n"
         "Upgrade: websocket\r\n"
         "Connection: Upgrade\r\n"
-        "Host: localhost:8080\r\n"
-        "Origin: http://localhost:8888\r\n"
-        "Pragma: no-cache\r\n"
-        "Cache-Control: no-cache\r\n"
         "Sec-WebSocket-Key: /oCIRrmB40qjf/mVxZfceA==\r\n"
         "Sec-WebSocket-Version: 13\r\n"
         "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits, "
-        "x-webkit-deflate-frame\r\n"
-        "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit"
-        "/537.36 (KHTML, like Gecko) Chrome/35.0.1916.114 Safari/537.36\r\n\0";
+        "x-webkit-deflate-frame\r\n";
 
       Parser p(request, strlen(request));
       p.parse();
@@ -55,19 +49,12 @@ go_bandit([]()
       AssertThat(h->getField("upgrade"), Equals("websocket"));
       AssertThat(h->getField("connection"), Equals("Upgrade"));
       AssertThat(h->getUpgrade(), Equals(Headers::Upgrade::WEBSOCKET));
-      AssertThat(h->getField("host"), Equals("localhost:8080"));
-      AssertThat(h->getField("origin"), Equals("http://localhost:8888"));
-      AssertThat(h->getField("pragma"), Equals("no-cache"));
-      AssertThat(h->getField("cache-control"), Equals("no-cache"));
       AssertThat(h->getField("sec-websocket-key"), 
           Equals("/oCIRrmB40qjf/mVxZfceA=="));
       AssertThat(h->getField("sec-websocket-version"), Equals("13"));
       AssertThat(h->getField("sec-websocket-extensions"), 
           Equals("permessage-deflate; client_max_window_bits, "
             "x-webkit-deflate-frame"));
-      AssertThat(h->getField("user-agent"), 
-          Equals("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_3) AppleWebKit"
-          "/537.36 (KHTML, like Gecko) Chrome/35.0.1916.114 Safari/537.36"));
     });
   });
 });
