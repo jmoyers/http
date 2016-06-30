@@ -3,6 +3,7 @@
 #include "headers.h"
 
 using namespace bandit;
+using namespace Http;
 
 go_bandit([]()
 {
@@ -17,7 +18,7 @@ go_bandit([]()
         "Accept: */*\r\n\r\n\0";
 
       Parser p(request, strlen(request));
-      p.run();
+      p.parse();
 
       auto h = p.getHeaders();
 
@@ -46,7 +47,7 @@ go_bandit([]()
         "/537.36 (KHTML, like Gecko) Chrome/35.0.1916.114 Safari/537.36\r\n\0";
 
       Parser p(request, strlen(request));
-      p.run();
+      p.parse();
 
       auto h = p.getHeaders();
 
