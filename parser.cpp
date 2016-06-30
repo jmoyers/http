@@ -38,30 +38,30 @@ void Parser::parse_method()
 {
   switch (curr())
   {
-    case 'G': m_headers->setMethod(Headers::Method::GET); m_index+=4; break;
-    case 'H': m_headers->setMethod(Headers::Method::HEAD); m_index+=5; break;
+    case 'G': m_headers->set_method(Headers::Method::GET); m_index+=4; break;
+    case 'H': m_headers->set_method(Headers::Method::HEAD); m_index+=5; break;
     case 'P': 
       switch (next())
       {
-        case 'O': m_headers->setMethod(Headers::Method::POST); m_index+=5; break;
-        case 'U': m_headers->setMethod(Headers::Method::PUT); m_index+=4; break;
-        case 'A': m_headers->setMethod(Headers::Method::PATCH); m_index+=6; break;
+        case 'O': m_headers->set_method(Headers::Method::POST); m_index+=5; break;
+        case 'U': m_headers->set_method(Headers::Method::PUT); m_index+=4; break;
+        case 'A': m_headers->set_method(Headers::Method::PATCH); m_index+=6; break;
       }
       break;
-    case 'D': m_headers->setMethod(Headers::Method::DELETE); m_index+=7; break;
-    case 'T': m_headers->setMethod(Headers::Method::TRACE); m_index+=6; break;
-    case 'O': m_headers->setMethod(Headers::Method::OPTIONS); m_index+=8; break;
-    case 'C': m_headers->setMethod(Headers::Method::CONNECT); m_index+=8; break;
+    case 'D': m_headers->set_method(Headers::Method::DELETE); m_index+=7; break;
+    case 'T': m_headers->set_method(Headers::Method::TRACE); m_index+=6; break;
+    case 'O': m_headers->set_method(Headers::Method::OPTIONS); m_index+=8; break;
+    case 'C': m_headers->set_method(Headers::Method::CONNECT); m_index+=8; break;
   }
 
-  if (m_headers->getMethod() == Headers::Method::NONE)
+  if (m_headers->get_method() == Headers::Method::NONE)
   {
     ERR("bad http method: %c", curr());
     m_state = State::BROKEN;
   }
   else
   {
-    DEBUG("http method: %d", (int) m_headers->getMethod());
+    DEBUG("http method: %d", (int) m_headers->get_method());
     m_state = State::PATH;
   }
 }
@@ -137,7 +137,7 @@ void Parser::parse_field()
   DEBUG("field: %s", field.c_str());
   DEBUG("value: %s", value.c_str());
 
-  m_headers->setField(field, value);
+  m_headers->set_field(field, value);
 
   curr = newline + 1;
   m_index = curr - m_buffer;

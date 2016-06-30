@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <map>
 
+namespace Http
+{
+
 class Headers
 {
   public:
@@ -44,19 +47,19 @@ class Headers
       m_fields()
     {}
 
-    std::string& getField(std::string name) 
+    std::string& get_field(std::string name) 
     { 
       return m_fields[name]; 
     }
     
-    void setField(std::string &name, const std::string &value) 
+    void set_field(std::string &name, const std::string &value) 
     {
       // http://goo.gl/gEA0Tn
       std::transform(name.begin(), name.end(), name.begin(), ::tolower);
       m_fields[name] = value;
     }
 
-    Upgrade getUpgrade() 
+    Upgrade get_upgrade() 
     { 
       if (m_fields["upgrade"] == "websocket")
       {
@@ -66,11 +69,11 @@ class Headers
       return Upgrade::NONE;
     }
 
-    Method getMethod() { return m_method; }
-    void setMethod(Method method) { m_method = method; }
+    Method get_method() { return m_method; }
+    void set_method(Method method) { m_method = method; }
 
-    Version getHTTPVersion() { return m_http_version; }
-    void setHTTPVersion(Version v) { m_http_version = v; }
+    Version get_http_version() { return m_http_version; }
+    void set_http_version(Version v) { m_http_version = v; }
 
   private:
     Method m_method;
@@ -79,5 +82,7 @@ class Headers
     Version m_http_version;
     std::map<std::string, std::string> m_fields;
 };
+
+} // namespace
 
 #endif

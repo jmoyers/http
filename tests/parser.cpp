@@ -22,11 +22,11 @@ go_bandit([]()
 
       auto h = p.get_headers();
 
-      AssertThat(h->getMethod(), Equals(Headers::Method::GET));
-      AssertThat(h->getField("host"), Equals("localhost:8080"));
-      AssertThat(h->getField("user-agent"), Equals("ApacheBench/2.3"));
-      AssertThat(h->getField("accept"), Equals("*/*"));
-      AssertThat(h->getUpgrade(), Equals(Headers::Upgrade::NONE));
+      AssertThat(h->get_method(), Equals(Headers::Method::GET));
+      AssertThat(h->get_field("host"), Equals("localhost:8080"));
+      AssertThat(h->get_field("user-agent"), Equals("ApacheBench/2.3"));
+      AssertThat(h->get_field("accept"), Equals("*/*"));
+      AssertThat(h->get_upgrade(), Equals(Headers::Upgrade::NONE));
     });
 
     it("should be able to parse a websocket GET request", []()
@@ -45,14 +45,14 @@ go_bandit([]()
 
       auto h = p.get_headers();
 
-      AssertThat(h->getMethod(), Equals(Headers::Method::GET));
-      AssertThat(h->getField("upgrade"), Equals("websocket"));
-      AssertThat(h->getField("connection"), Equals("Upgrade"));
-      AssertThat(h->getUpgrade(), Equals(Headers::Upgrade::WEBSOCKET));
-      AssertThat(h->getField("sec-websocket-key"), 
+      AssertThat(h->get_method(), Equals(Headers::Method::GET));
+      AssertThat(h->get_field("upgrade"), Equals("websocket"));
+      AssertThat(h->get_field("connection"), Equals("Upgrade"));
+      AssertThat(h->get_upgrade(), Equals(Headers::Upgrade::WEBSOCKET));
+      AssertThat(h->get_field("sec-websocket-key"), 
           Equals("/oCIRrmB40qjf/mVxZfceA=="));
-      AssertThat(h->getField("sec-websocket-version"), Equals("13"));
-      AssertThat(h->getField("sec-websocket-extensions"), 
+      AssertThat(h->get_field("sec-websocket-version"), Equals("13"));
+      AssertThat(h->get_field("sec-websocket-extensions"), 
           Equals("permessage-deflate; client_max_window_bits, "
             "x-webkit-deflate-frame"));
     });
