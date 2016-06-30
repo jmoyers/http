@@ -20,7 +20,7 @@ go_bandit([]()
       Parser p(request, strlen(request));
       p.parse();
 
-      auto h = p.getHeaders();
+      auto h = p.get_headers();
 
       AssertThat(h->getMethod(), Equals(Headers::Method::GET));
       AssertThat(h->getField("host"), Equals("localhost:8080"));
@@ -43,7 +43,7 @@ go_bandit([]()
       Parser p(request, strlen(request));
       p.parse();
 
-      auto h = p.getHeaders();
+      auto h = p.get_headers();
 
       AssertThat(h->getMethod(), Equals(Headers::Method::GET));
       AssertThat(h->getField("upgrade"), Equals("websocket"));

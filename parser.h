@@ -27,7 +27,7 @@ class Parser
 
     State parse();
 
-    std::shared_ptr<Headers> getHeaders() { return m_headers; }
+    std::shared_ptr<Headers> get_headers() { return m_headers; }
   protected:
     State m_state;
     const char *m_buffer;
