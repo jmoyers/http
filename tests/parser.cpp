@@ -1,6 +1,7 @@
 #include "bandit/bandit.h"
 #include "parser.h"
 #include <iostream>
+#include <string>
 
 using namespace bandit;
 using namespace Http;
@@ -14,9 +15,7 @@ go_bandit([]()
     {
       const char request[] = "";
       Parser parser(request, strlen(request));
-      auto state = parser.parse();
-
-      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(parser.parse(), Equals(Parser::State::DONE));
     });
 
     it("should parse a GET request", []
@@ -31,6 +30,8 @@ go_bandit([]()
       AssertThat(state, Equals(Parser::State::DONE));
       AssertThat(parser.get_headers()->get_method(), 
           Equals(Headers::Method::GET));
+      AssertThat(version, Equals(Headers::Version{1,0}));
+      AssertThat(headers->get_path(), Equals(std::string("/")));
     });
 
     it("should parse a HEAD request", []
@@ -44,6 +45,123 @@ go_bandit([]()
 
       AssertThat(state, Equals(Parser::State::DONE));
       AssertThat(headers->get_method(), Equals(Headers::Method::HEAD));
+      AssertThat(headers->get_path(), Equals(std::string("/testpath")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a POST request", []
+    {
+      const char request[] =
+        "POST /test-post HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::POST));
+      AssertThat(headers->get_path(), Equals(std::string("/test-post")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a PUT request", []
+    {
+      const char request[] =
+        "PUT /test-put HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::PUT));
+      AssertThat(headers->get_path(), Equals(std::string("/test-put")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+    
+    it("should parse a PATCH request", []
+    {
+      const char request[] =
+        "PATCH /test-patch HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::PATCH));
+      AssertThat(headers->get_path(), Equals(std::string("/test-patch")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a DELETE request", []
+    {
+      const char request[] =
+        "DELETE /test-delete HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::DELETE));
+      AssertThat(headers->get_path(), Equals(std::string("/test-delete")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a TRACE request", []
+    {
+      const char request[] =
+        "TRACE /test-trace HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::TRACE));
+      AssertThat(headers->get_path(), Equals(std::string("/test-trace")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a OPTIONS request", []
+    {
+      const char request[] =
+        "OPTIONS /test-options HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::OPTIONS));
+      AssertThat(headers->get_path(),
+          Equals(std::string("/test-options")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
+    });
+
+    it("should parse a CONNECT request", []
+    {
+      const char request[] =
+        "CONNECT /test-connect HTTP/1.1";
+
+      Parser parser(request, strlen(request));
+      auto state = parser.parse();
+      auto headers = parser.get_headers();
+
+      AssertThat(state, Equals(Parser::State::DONE));
+      AssertThat(headers->get_method(), Equals(Headers::Method::CONNECT));
+      AssertThat(headers->get_path(),
+          Equals(std::string("/test-connect")));
+      AssertThat(headers->get_http_version(), 
+          Equals(Headers::Version{1,1}));
     });
 
     it("should reject incomplete http verb", []
@@ -52,9 +170,7 @@ go_bandit([]()
         "GE.... thing thats not a verb";
 
       Parser parser(request, strlen(request));
-      auto state = parser.parse();
-
-      AssertThat(state, Equals(Parser::State::BROKEN));
+      AssertThat(parser.parse(), Equals(Parser::State::BROKEN));
       AssertThat(parser.get_headers()->get_method(), 
           Equals(Headers::Method::NONE));
     });
@@ -87,8 +203,8 @@ go_bandit([]()
         "Connection: Upgrade\r\n"
         "Sec-WebSocket-Key: /oCIRrmB40qjf/mVxZfceA==\r\n"
         "Sec-WebSocket-Version: 13\r\n"
-        "Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits, "
-        "x-webkit-deflate-frame\r\n";
+        "Sec-WebSocket-Extensions: permessage-deflate; "
+        "client_max_window_bits, x-webkit-deflate-frame\r\n";
 
       Parser p(request, strlen(request));
       p.parse();
@@ -96,6 +212,7 @@ go_bandit([]()
       auto h = p.get_headers();
 
       AssertThat(h->get_method(), Equals(Headers::Method::GET));
+      AssertThat(h->get_path(), Equals(std::string("/chat")));
       AssertThat(h->get_field("upgrade"), Equals("websocket"));
       AssertThat(h->get_field("connection"), Equals("Upgrade"));
       AssertThat(h->get_upgrade(), Equals(Headers::Upgrade::WEBSOCKET));

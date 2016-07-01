@@ -56,7 +56,6 @@ class Parser
     const char *advance();
     const char *advance(const char *);
     bool eof() const;
-
 }; // class
 
 }  // namespace

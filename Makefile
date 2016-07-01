@@ -18,16 +18,16 @@ TESTS_INCLUDE = -Ivendor/bandit/ -I.
 all: server parser main parser_tests
 
 main: server parser
-	clang++ -g -o build/server $(CXXFLAGS) \
+	$(CXX) -o build/server $(CXXFLAGS) \
 		build/server.o build/parser.o $(SERVER_RUN_SRC)
 
 server: parser
-	clang++ -g -c -o build/server.o $(CXXFLAGS) $(SERVER_SRC)
+	$(CXX) -c -o build/server.o $(CXXFLAGS) $(SERVER_SRC)
 
 parser:
-	clang++ -g -c -o build/parser.o $(CXXFLAGS) $(PARSER_SRC)
+	$(CXX) -c -o build/parser.o $(CXXFLAGS) $(PARSER_SRC)
 
 parser_tests: parser
-	clang++ -g -o build/tests/parser $(CXXFLAGS) \
+	$(CXX) -o build/tests/parser $(CXXFLAGS) \
 		build/parser.o $(TESTS_INCLUDE) $(PARSER_TESTS)
 	build/tests/parser
