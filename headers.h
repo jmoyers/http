@@ -32,12 +32,19 @@ class Headers
       WEBSOCKET
     };
 
-    typedef struct Version
+    struct Version
     {
       int major;
       int minor;
       int patch;
-    } Version;
+
+      inline bool operator==(const Version& other) const
+      {
+        return major == other.major &&
+          minor == other.minor &&
+          patch == other.patch;
+      }
+    };
 
     Headers() : 
       m_upgrade(Upgrade::NONE),
@@ -75,6 +82,9 @@ class Headers
     Version get_http_version() { return m_http_version; }
     void set_http_version(Version v) { m_http_version = v; }
 
+    std::string& get_path() { return m_path; }
+    void set_path(std::string &path) { m_path = path; }
+
   private:
     Method m_method;
     std::string m_path;
@@ -82,6 +92,7 @@ class Headers
     Version m_http_version;
     std::map<std::string, std::string> m_fields;
 };
+
 
 } // namespace
 

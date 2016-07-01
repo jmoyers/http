@@ -14,7 +14,7 @@ Parser::Parser(const char *buffer, size_t size) :
 
 Parser::State Parser::parse()
 {
-  DEBUG("%s", m_buffer);
+  DEBUG("parsing started for buffer len: %zu", m_buffer_size);
   
   while (m_index < m_buffer_size)
   {
@@ -31,32 +31,58 @@ Parser::State Parser::parse()
     }
   }
 
+  m_state = State::DONE;
+
   return m_state;
+}
+
+/**
+ * If we see the string specified by next, we will advance the pointer forward
+ * by that number of characters and return true, otherwise, we'll return false
+ * and keep the pointer where it was.
+ */
+bool Parser::parse_expect(const char *next)
+{
+  mark();
+
+  while (*next && !eof())
+  {
+    if(*next != curr()) {
+      return_to_mark();
+      return false;
+    }
+    next++;
+    advance();
+  }
+
+  return true;
 }
 
 void Parser::parse_method()
 {
-  switch (curr())
-  {
-    case 'G': m_headers->set_method(Headers::Method::GET); m_index+=4; break;
-    case 'H': m_headers->set_method(Headers::Method::HEAD); m_index+=5; break;
-    case 'P': 
-      switch (next())
-      {
-        case 'O': m_headers->set_method(Headers::Method::POST); m_index+=5; break;
-        case 'U': m_headers->set_method(Headers::Method::PUT); m_index+=4; break;
-        case 'A': m_headers->set_method(Headers::Method::PATCH); m_index+=6; break;
-      }
-      break;
-    case 'D': m_headers->set_method(Headers::Method::DELETE); m_index+=7; break;
-    case 'T': m_headers->set_method(Headers::Method::TRACE); m_index+=6; break;
-    case 'O': m_headers->set_method(Headers::Method::OPTIONS); m_index+=8; break;
-    case 'C': m_headers->set_method(Headers::Method::CONNECT); m_index+=8; break;
+  if (parse_expect("GET")) {
+    m_headers->set_method(Headers::Method::GET);
+  } else if (parse_expect("HEAD")) {
+    m_headers->set_method(Headers::Method::HEAD);
+  } else if (parse_expect("POST")) {
+    m_headers->set_method(Headers::Method::POST); 
+  } else if (parse_expect("PUT")) {
+    m_headers->set_method(Headers::Method::PUT);
+  } else if (parse_expect("PATCH")) {
+    m_headers->set_method(Headers::Method::PATCH);
+  } else if (parse_expect("DELETE")) {
+    m_headers->set_method(Headers::Method::DELETE);
+  } else if (parse_expect("TRACE")) {
+    m_headers->set_method(Headers::Method::TRACE);
+  } else if (parse_expect("OPTIONS")) {
+    m_headers->set_method(Headers::Method::OPTIONS);
+  } else if (parse_expect("CONNECT")) {
+    m_headers->set_method(Headers::Method::CONNECT);
   }
 
   if (m_headers->get_method() == Headers::Method::NONE)
   {
-    ERR("bad http method: %c", curr());
+    ERR("bad http method at: %zu %c", m_index, curr());
     m_state = State::BROKEN;
   }
   else
@@ -66,24 +92,96 @@ void Parser::parse_method()
   }
 }
 
+void Parser::eat_whitespace()
+{
+  while (!eof() && (curr() == ' ' || curr() == '\r' || curr() == '\n'))
+    advance();
+}
+
 void Parser::parse_path()
 {
-  const char *c = m_buffer + m_index;
-  const char *newline = strchr(c, '\n');
+  // eat the whitespace before the path
+  eat_whitespace();
 
-  if (newline == NULL)
+  DEBUG("parsing path at %zu '%c'", m_index, curr());
+
+  // end of line, includes version
+  const char *newline = find_next('\n');
+
+  // end of path
+  const char *end_of_path = find_next(' ');
+
+  if (end_of_path == NULL)
   {
+    DEBUG("parsing path failed, no whitespace before http version");
     m_state = State::BROKEN;
     return;
   }
 
-  m_index = (newline - m_buffer) + 1;
-  m_state = State::FIELD;
+  if (newline && end_of_path > newline)
+  {
+    DEBUG("parsing path failed, newline detected before whitespace");
+    m_state = State::BROKEN;
+    return;
+  }
+
+  std::string path(pos(), end_of_path);
+  m_headers->set_path(path);
+
+  m_index = end_of_path - m_buffer;
+  m_state = State::VERSION;
 }
 
 void Parser::parse_version()
 {
-  m_index++;
+  eat_whitespace();
+
+  if (!parse_expect("HTTP/"))
+  {
+    DEBUG("bad http version, missing HTTP/");
+    m_state = State::BROKEN;
+    return;
+  }
+
+  DEBUG("parsing version at %zu '%c'", m_index, curr());
+
+  mark();
+
+  int major = 0, minor = 0;
+
+  if (!eof())
+  {
+    major = static_cast<int>(curr()) - 48;
+    advance();
+  }
+  else
+  {
+    DEBUG("bad http version, missing major version");
+    return_to_mark();
+    m_state = State::BROKEN;
+    return;
+  }
+
+  // .
+  advance();
+
+  if (!eof())
+  {
+    minor = static_cast<int>(curr()) - 48;
+    advance();
+  } 
+  else
+  {
+    DEBUG("bad http version, missing minor version");
+    return_to_mark();
+    m_state = State::BROKEN;
+    return;
+  }
+
+  DEBUG("parse http version %d.%d", major, minor);
+
+  m_headers->set_http_version(Headers::Version{major, minor});
+  m_state = State::FIELD;
 }
 
 /**
@@ -99,8 +197,10 @@ void Parser::parse_version()
  */
 void Parser::parse_field()
 {
-  const char *curr = m_buffer + m_index;
-  const char *delim = strchr(curr, ':');
+  eat_whitespace();
+  mark();
+  
+  const char *delim = find_next(':');
 
   if (delim == NULL)
   {
@@ -108,22 +208,18 @@ void Parser::parse_field()
     return;
   }
 
-  std::string field(curr, delim - curr);
+  std::string field(pos(), delim);
 
-  curr = delim + 1;
+  advance(delim + 1);
 
-  while (*curr == ' ')
-  {
-    curr++;
-  }
+  eat_whitespace();
 
-  if (*curr == '\0')
-  {
+  if (eof()) {
     m_state = State::BROKEN;
     return;
   }
 
-  char *newline = strchr(curr, '\n');
+  const char *newline = find_next('\n');
 
   if (newline == NULL)
   {
@@ -131,24 +227,24 @@ void Parser::parse_field()
     return;
   }
 
-  int cr_offset = *(newline - 1) == '\r' ? 1 : 0;
-  std::string value(curr, newline - curr - cr_offset);
+  size_t cr_offset = *(newline - 1) == '\r' ? 1 : 0;
+  
+  std::string value(pos(), newline - cr_offset);
 
   DEBUG("field: %s", field.c_str());
   DEBUG("value: %s", value.c_str());
 
   m_headers->set_field(field, value);
 
-  curr = newline + 1;
-  m_index = curr - m_buffer;
+  advance(newline + 1);
 }
 
-inline const char & Parser::curr()
+inline const char & Parser::curr() const
 {
   return m_buffer[m_index];
 }
 
-inline const char & Parser::next()
+inline const char & Parser::next() const
 {
   if (m_index+1 < m_buffer_size)
   {
@@ -158,9 +254,46 @@ inline const char & Parser::next()
   return m_buffer[m_buffer_size];
 }
 
-inline const char & Parser::prev()
+inline const char & Parser::prev() const
 {
   return m_buffer[m_index-1];
+}
+
+inline void Parser::mark()
+{
+  m_mark = m_index;
+}
+
+inline void Parser::return_to_mark()
+{
+  m_index = m_mark;
+}
+
+inline const char *Parser::pos() const
+{
+  return m_buffer + m_index;
+}
+
+inline const char *Parser::find_next(const char &find) const
+{
+  return strchr(m_buffer + m_index, find);
+}
+
+inline const char *Parser::advance()
+{
+  m_index++;
+  return m_buffer + m_index;
+} 
+
+inline const char *Parser::advance(const char *to)
+{
+  m_index = to - m_buffer;
+  return m_buffer + m_index;
+}
+
+inline bool Parser::eof() const
+{
+  return m_buffer_size < m_index;
 }
 
 } // namespace
