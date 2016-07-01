@@ -13,6 +13,17 @@
 namespace Http
 {
 
+/**
+ * Server transport state machine
+ * 1. Acquire socket with socket(), set fd to nonblocking with fcntl()
+ * 2. Bind socket to address/port with bind()
+ * 3. Begin listening with listen()
+ * 4. Subscribe to kqueue with kqueue(), EV_SET(), kevent()
+ * 5. Loop for kqueue events with k_event()
+ *
+ * Client transport state machine
+ * TODO
+ */
 class Transport {
   protected:
     enum SocketState {
