@@ -204,9 +204,10 @@ void Server::onRead(struct kevent& event)
   }
   else
   {
-    // Intentional. See if it even shows up on profiles.
     response += "HTTP/1.1 200 OK\r\n";
-    response += "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+    response += "Content-Type: text/html; charset=UTF-8\r\n";
+    response += "\r\n";
+    response += "Hello, world!\r\n";
   }
 
   int bytes_sent = send(event.ident, response.c_str(), response.size(), 0);
