@@ -10,6 +10,7 @@ endif
 
 SERVER_SRC = server.cpp
 PARSER_SRC = parser.cpp
+TRANSPORT_SRC = transport.cpp
 SERVER_RUN_SRC = main.cpp
 
 PARSER_TESTS = tests/parser.cpp
@@ -26,6 +27,9 @@ server: parser
 
 parser:
 	$(CXX) -c -o build/parser.o $(CXXFLAGS) $(PARSER_SRC)
+
+transport:
+	$(CXX) -c -o build/transport.o $(CXXFLAGS) $(TRANSPORT_SRC)
 
 parser_tests: parser
 	$(CXX) -o build/tests/parser $(CXXFLAGS) \
