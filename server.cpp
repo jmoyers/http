@@ -198,7 +198,7 @@ void Server::onRead(struct kevent& event)
 
   std::string response;
 
-  if (p.getHeaders()->getMethod() == Headers::Method::NONE)
+  if (p.get_headers()->get_method() == Headers::Method::NONE)
   {
     response += "HTTP/1.1 400 Bad Request\r\n";
   }
