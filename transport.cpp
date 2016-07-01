@@ -10,7 +10,7 @@ namespace Net
  * If the socket is acquired, we move the socket state machine forward
  * to initialized.
  *
- * A socket is identified as a tuple of five values:
+ * A connection is identified as a tuple of five values:
  * {<protocol>, <src addr>, <src port>, <dest addr>, <dest port>}
  *
  * Without SO_REUSEADDR, binding socketA to 0.0.0.0:21 and then binding 
