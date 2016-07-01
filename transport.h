@@ -4,13 +4,17 @@
 #include <netinet/in.h> // sockaddr_in
 #include <sys/event.h>  // kevent
 #include <string.h>     // strerror
+#include <string>       // std::string
+#include <inttypes.h>   // PRIXPTR (printing pointers)
 #include <arpa/inet.h>  // inet_addr
 #include <errno.h>      // errno, set by syscalls
 #include <fcntl.h>      // fcntl, F_SETFL, O_NONBLOCK
+#include <sys/socket.h> // bind, listen, accept, connect
+#include <unistd.h>     // close, read, write
 
 #include "Log.h"
 
-namespace Http
+namespace Net
 {
 
 /**
@@ -51,7 +55,6 @@ class Transport {
     int bind();
     int shutdown();
     int close();
-    int setup();
   public:
     Transport(
         const char *addr = "0.0.0.0", 
@@ -60,13 +63,15 @@ class Transport {
     Transport(Transport &&) = delete;
     ~Transport();
 
-    int start();
+    int setup();
 
-    void on_read();
-    void on_eof();
+    void read_event();
 
-    void on_connect();
-    void on_disconnect();
+    int on_read(struct kevent&);
+    int on_eof(struct kevent&);
+
+    int on_client_connect(struct kevent&);
+    int on_client_disconnect(struct kevent&);
 };
 
 }
