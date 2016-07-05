@@ -22,7 +22,8 @@ Transport::Transport() :
   m_backlog(),
   m_kqueue(),
   m_event_subs(),
-  m_event_list()
+  m_event_list(),
+  m_receive_buf()
 {
 }
 
@@ -39,14 +40,14 @@ int Transport::listen(const char *addr, int port)
 
   m_kqueue = kqueue();
 
-  EV_SET(&m_event_subs, m_listen, EVFILT_READ, EV_ADD, 0, 0, NULL);
+  EV_SET(&m_event_subs, m_listen.fd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
 
   int err = kevent(m_kqueue, &m_event_subs, 1, NULL, 0, NULL);
 
   if (err < 0)
   {
     ERR("kqueue setup: %s", strerror(errno));
-    ERR("  m_listen: %d", m_listen);
+    ERR("  m_listen: %lu", m_listen.fd());
     ERR("  m_kqueue: %d", m_kqueue);
   }
 
@@ -79,14 +80,14 @@ void Transport::pump()
 
     if (event.ident == m_listen.fd())
     {
-      auto socket = add_client(event);
-      on_client_connect(socket);
+      auto client = add_client(event);
+      on_client_connect(client);
     }
     else
     {
       if (event.flags & EVFILT_READ) 
       {
-        on_read(event);
+        on_read(find_client(event));
       }
       if (event.flags & EV_EOF)
       {
@@ -96,14 +97,17 @@ void Transport::pump()
   }
 }
 
-Socket add_client(struct kevent &e)
+Socket Transport::add_client(struct kevent &e)
 {
-  auto client = m_clients[e.ident] = Socket(e.ident);
+  Socket client(e.ident);
   client.accept();
+
+  m_clients[client.fd()] = client;
+
   return client;
 }
 
-Socket find_client(struct kevent &e)
+Socket Transport::find_client(struct kevent &e)
 {
   return m_clients[e.ident];
 }
@@ -140,7 +144,7 @@ int Transport::on_client_disconnect(Socket client)
   DEBUG("[0x%016" PRIXPTR "] client disconnect", client.fd());
 
   // since we've been notified a client disconnected, unregister out interest
-  EV_SET(&m_event_subs, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+  EV_SET(&m_event_subs, client.fd(), EVFILT_READ, EV_DELETE, 0, 0, NULL);
 
   int err = kevent(m_kqueue, &m_event_subs, 1, NULL, 0, NULL);
 
@@ -157,7 +161,7 @@ int Transport::on_read(Socket client)
 {
   DEBUG("[1x%016" PRIXPTR "] client read", client.fd());
 
-  int bytes = client.recv(m_receive_buf, RECEIVE_SIZE);
+  int bytes = client.recv(m_receive_buf, RECEIVE_MAX);
 
   if (bytes <= 0)
   {
@@ -167,8 +171,6 @@ int Transport::on_read(Socket client)
   }
 
   DEBUG("received: %s", m_receive_buf);
-
-  event.flags |= EV_EOF;
 
   return bytes;
 }
@@ -182,12 +184,12 @@ int Transport::close()
     ERR("close: %s", strerror(errno));
   }
 
-  return err;
+  return m_listen.err();
 }
 
 Transport::~Transport()
 {
-  if (m_listen.get_state() == LISTENING) close();
+  if (m_listen.state() == Socket::LISTENING) close();
 }
 
 }

@@ -29,15 +29,19 @@ class Socket
     Socket(FD fd, State state = INVALID);
     Socket();
 
-    int configure(); 
     int configure(const char *, int); 
+    int configure(); 
     int bind();
     int listen();
+    int accept();
+    int close();
 
-    FD fd()                 { return m_fd; };
+    int send(const char *, size_t);
+    int recv(char *, size_t);
+
     State state()           { return m_state; }
     int err()               { return m_err; }
-    const char *buffer()    { return m_buf; }
+    FD fd()                 { return m_fd; };
 
     static void ipv4(IPV4&, const char *, int&);
   private:

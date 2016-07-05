@@ -21,6 +21,9 @@ class Transport {
     int m_kqueue;
     struct kevent m_event_subs;
 
+    static const int RECEIVE_MAX = 1024;
+    char m_receive_buf[RECEIVE_MAX];
+
     static const int EVENTS_MAX = 32;
     struct kevent m_event_list[EVENTS_MAX];
 
@@ -38,14 +41,14 @@ class Transport {
     Socket find_client(struct kevent&);
     Socket add_client(struct kevent&);
 
-    int on_read(struct kevent&);
-    int on_eof(struct kevent&);
+    int on_read(Socket);
+    int on_eof(Socket);
+    int on_client_connect(Socket);
+    int on_client_disconnect(Socket);
 
     // listen - "server" specific
-    Socket listen(const char*, int);  
-    Socket on_client_connect(struct kevent&);
-    Socket on_client_disconnect(struct kevent&);
-
+    int listen(const char*, int);  
+    
     void pump();
 };
 

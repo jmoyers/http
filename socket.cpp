@@ -121,12 +121,12 @@ int Socket::close()
   ::close(m_fd);
 }
 
-int Socket::send(const char *data, size_t length)
+int Socket::send(const char *buf, size_t length)
 {
-  return ::send(m_fd, data, length, 0);
+  return ::send(m_fd, buf, length, 0);
 }
 
-int Socket::recv(char *buf, int size)
+int Socket::recv(char *buf, size_t length)
 {
-  return ::recv(m_fd, buf, size, 0);
+  return ::recv(m_fd, buf, length, 0);
 }
