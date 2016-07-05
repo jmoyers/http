@@ -17,123 +17,45 @@ namespace Net
  * socketB to 192.168.0.1:21 will fail (with error EADDRINUSE), since 
  * 0.0.0.0 means "any local IP address"
  */
-Transport::Transport(const char *addr, int port) :
-  m_address(),
-  m_sock(),
-  m_backlog(1000),
+Transport::Transport() :
+  m_listen(Socket()),
+  m_backlog(),
   m_kqueue(),
   m_event_subs(),
-  m_event_list(),
-  m_receive_buf(),
-  m_sock_state()
+  m_event_list()
 {
-  // For the curious mind
-  // http://stackoverflow.com/q/6729366/
-  m_address.sin_family = AF_INET;
-
-  // Converts a string containing an ipv4 dotted-decimal address into
-  // what this struct and the api is expecting
-  m_address.sin_addr.s_addr = inet_addr(addr);
-
-  // Converts the unsigned integer port from host byte order to 
-  // network byte order, little endian to big endian
-  m_address.sin_port = htons(port);
-
-  //  AF_INET - Address family
-  //  SOCK_STREAM - Stream based protocl (as opposed to datagram UDP)
-  //  IPPROTO_TCP - Explicitly specifies TCP protocol, though it sounds
-  //    as though we could just specify 0 here and SOCK_STREAM would force
-  m_sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-
-  // Berkeley socket API returns integers and less than 0 is an error
-  if (m_sock < 0)
-  {
-    ERR("socket: %s", strerror(errno));
-    return;
-  }
-
-  m_sock_state = INITIALIZED;
-
-  int sock_reuse = 1;
-  setsockopt(m_sock, SOL_SOCKET, SO_REUSEADDR, &sock_reuse,
-      sizeof(sock_reuse));
-
-  // fcntl = change file descriptor. a socket is a file descriptor.
-  // without setting this to non-block, if you use a function that
-  // receives or sends data, it will wait until it gets something.
-  //
-  // if we set this, one technique, which we will use, it to use
-  // kqueue to let the kernel notify us when a new event comes through
-  // for the socket.
-  fcntl(m_sock, F_SETFL, O_NONBLOCK);
 }
 
-int Transport::bind()
+int Transport::listen(const char *addr, int port)
 {
-  // Once socket is initialized with protocol type, and nonblocking fd options
-  // from the constructor, we can bind the address
-  int err = ::bind(m_sock, (struct sockaddr *) &m_address,
-      sizeof(m_address));
+  if (m_listen.configure(addr, port) < 0) return m_listen.err();
+  if (m_listen.bind() < 0)                return m_listen.err();
+  if (m_listen.listen() < 0)              return m_listen.err();
 
-  if (err < 0)
+  if (m_listen.state() != Socket::State::LISTENING)
   {
-    ERR("bind: %s", strerror(errno));
-  }
-  else
-  {
-    m_sock_state = BOUND;
-  }
-
-  return err;
-}
-
-int Transport::listen()
-{
-  // Once the socket is bound, we can then listen on the socket. The kernel
-  // also wants a backlog, which is the max pending connections for the socket
-  int err = ::listen(m_sock, m_backlog);
-
-  if (err < 0)
-  {
-    ERR("listen: %s", strerror(errno));
-  }
-  else
-  {
-    m_sock_state = LISTENING;
-  }
-
-  return err;
-}
-
-int Transport::setup()
-{
-  int err = 0;
-
-  if (m_sock_state < BOUND)
-  {
-    if ((err = bind()) < 0) return err;
-    if ((err = listen()) < 0) return err;
+    return m_listen.err(); 
   }
 
   m_kqueue = kqueue();
 
-  EV_SET(&m_event_subs, m_sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
+  EV_SET(&m_event_subs, m_listen, EVFILT_READ, EV_ADD, 0, 0, NULL);
 
-  err = kevent(m_kqueue, &m_event_subs, 1, NULL, 0, NULL);
+  int err = kevent(m_kqueue, &m_event_subs, 1, NULL, 0, NULL);
 
   if (err < 0)
   {
     ERR("kqueue setup: %s", strerror(errno));
-    ERR("  m_sock: %d", m_sock);
+    ERR("  m_listen: %d", m_listen);
     ERR("  m_kqueue: %d", m_kqueue);
   }
 
   return err;
 }
 
-void Transport::read_event()
+void Transport::pump()
 {
-  if (m_sock_state != LISTENING)
+  if (m_listen.state() != Socket::LISTENING)
   {
     ERR("must have a listening socket to read events, run setup");
     return;
@@ -141,7 +63,7 @@ void Transport::read_event()
 
   int event_count = 0;
   int event_iter = 0;
-  struct kevent curr_event;
+  struct kevent event;
 
   event_count = kevent(m_kqueue, NULL, 0, m_event_list, EVENTS_MAX, NULL);
 
@@ -153,54 +75,69 @@ void Transport::read_event()
 
   for (event_iter = 0; event_iter < event_count; event_iter++)
   {
-    curr_event = m_event_list[event_iter];
+    event = m_event_list[event_iter];
 
-    if (curr_event.ident == m_sock)
+    if (event.ident == m_listen.fd())
     {
-      on_client_connect(curr_event);
+      auto socket = add_client(event);
+      on_client_connect(socket);
     }
     else
     {
-      if (curr_event.flags & EVFILT_READ) on_read(curr_event);
-      if (curr_event.flags & EV_EOF)      on_client_disconnect(curr_event);
+      if (event.flags & EVFILT_READ) 
+      {
+        on_read(event);
+      }
+      if (event.flags & EV_EOF)
+      {
+        on_client_disconnect(find_client(event));
+      }
     }
   }
 }
 
-int Transport::on_client_connect(struct kevent& event)
+Socket add_client(struct kevent &e)
 {
-  // we were notified of client connection by kqueue, so accept the connection
-  int client_sock = ::accept(event.ident, NULL, NULL);
+  auto client = m_clients[e.ident] = Socket(e.ident);
+  client.accept();
+  return client;
+}
 
-  DEBUG("[0x%016" PRIXPTR "] client connect", (unsigned long) client_sock);
+Socket find_client(struct kevent &e)
+{
+  return m_clients[e.ident];
+}
 
-  if (client_sock < 0)
+int Transport::on_client_connect(Socket client)
+{
+  client.accept();
+
+  DEBUG("[0x%016" PRIXPTR "] client connect", (unsigned long) client.fd());
+
+  if (client.err() < 0)
   {
-    ERR("[0x%016" PRIXPTR "] client connect: %s", event.ident, 
+    ERR("[0x%016" PRIXPTR "] client connect: %s", client.fd(), 
         strerror(errno));
   }
 
-  // set the new client connection to non-blocking
-  fcntl(client_sock, F_SETFL, O_NONBLOCK);
-
   // fill out of event subscription struct, so that we receive events for
   // the new client socket as well as our own
-  EV_SET(&m_event_subs, client_sock, EVFILT_READ, EV_ADD, 0, 0, NULL);
+  EV_SET(&m_event_subs, client.fd(), EVFILT_READ, EV_ADD, 0, 0, NULL);
   
   // call kqueue with new event struct, registering out interests
   int err = kevent(m_kqueue, &m_event_subs, 1, NULL, 0, NULL);
 
   if (err < 0)
   {
-    ERR("[0x%016" PRIXPTR  "] sub: %s", event.ident, strerror(errno));
+    ERR("[0x%016" PRIXPTR  "] sub: %s", client.fd(), strerror(errno));
   }
   
   return err;
 }
 
-int Transport::on_client_disconnect(struct kevent& event)
+int Transport::on_client_disconnect(Socket client)
 {
-  DEBUG("[0x%016" PRIXPTR "] client disconnect", event.ident);
+  DEBUG("[0x%016" PRIXPTR "] client disconnect", client.fd());
 
   // since we've been notified a client disconnected, unregister out interest
   EV_SET(&m_event_subs, event.ident, EVFILT_READ, EV_DELETE, 0, 0, NULL);
@@ -209,44 +146,38 @@ int Transport::on_client_disconnect(struct kevent& event)
 
   if (err < 0)
   {
-    ERR("[0x%016" PRIXPTR "] kqueue unsub", event.ident);
+    ERR("[0x%016" PRIXPTR "] kqueue unsub", client.fd());
   }
 
   // finally now that we don't receive events from kqueue, close the socket
-  return ::close(event.ident);
+  return client.close();
 }
 
-int Transport::on_read(struct kevent& event)
+int Transport::on_read(Socket client)
 {
-  DEBUG("[0x%016" PRIXPTR "] client read", event.ident);
+  DEBUG("[1x%016" PRIXPTR "] client read", client.fd());
 
-  int bytes_read = recv(event.ident, m_receive_buf, 
-      sizeof(m_receive_buf) - 1, 0);
+  int bytes = client.recv(m_receive_buf, RECEIVE_SIZE);
 
-  if (bytes_read <= 0)
+  if (bytes <= 0)
   {
-    ERR("[0x%016" PRIXPTR "] client receive: %s", event.ident, 
+    ERR("[0x%016" PRIXPTR "] client receive: %s", client.fd(), 
         strerror(errno));
-    return bytes_read;
+    return bytes;
   }
-
-  m_receive_buf[bytes_read] = '\0';
 
   DEBUG("received: %s", m_receive_buf);
 
-  // lets just be an echo server for right now
-  std::string response(m_receive_buf, strlen(m_receive_buf));
-  int bytes_sent = send(event.ident, response.c_str(), response.size(), 0);
-
   event.flags |= EV_EOF;
-  return bytes_read;
+
+  return bytes;
 }
 
 int Transport::close()
 {
-  int err = ::close(m_sock);
+  m_listen.close();
 
-  if (err < 0)
+  if (m_listen.err() < 0)
   {
     ERR("close: %s", strerror(errno));
   }
@@ -256,7 +187,7 @@ int Transport::close()
 
 Transport::~Transport()
 {
-  if (m_sock_state == LISTENING) close();
+  if (m_listen.get_state() == LISTENING) close();
 }
 
 }

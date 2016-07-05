@@ -6,6 +6,30 @@
 
 networking api notes
 ```
+ Server transport state machine
+ 1. Acquire socket with socket(), set fd to nonblocking with fcntl()
+ 2. Bind socket to address/port with bind()
+ 3. Begin listening with listen()
+ 4. Subscribe to kqueue with kqueue(), EV_SET(), kevent()
+ 5. Loop for kqueue events with kevent()
+  a. You can get an event with your socket set as ident, new client connected
+  b. You can get read events which means you can read a client sent msg
+  c. You can get an eof, which means the client has disconnected
+
+ Client transport state machine
+ 1. Acquire socket with socket(), set fd to nonblocking with fcntl()
+ 2. Subscribe to kqueue for this socket with kqueue(), EV_SET(), kevent()
+ 3. Connect to server with socket, server addr with connect()
+ 4. Send a message to the server with write() and a buffer
+ 5. Loop for kqueue events with kevent()
+  a. You can get read events for server returning traffic to you
+  b. You can get an eof from the server, which means you close the socket
+
+  In TCP, a socket represents a connections -- both send and receive.
+  When you acquire a port to listen on, you get notified of new connections
+  via kqueue with a new socket for you to accept, read from, and close as
+  you will.
+
 server
   purpose
     application layer
