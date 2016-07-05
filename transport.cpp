@@ -80,8 +80,7 @@ void Transport::pump()
 
     if (event.ident == m_listen.fd())
     {
-      auto client = add_client(event);
-      on_client_connect(client);
+      on_client_connect(add_client(event));
     }
     else
     {

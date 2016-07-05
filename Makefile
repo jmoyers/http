@@ -11,9 +11,11 @@ endif
 SERVER_SRC = server.cpp
 PARSER_SRC = parser.cpp
 TRANSPORT_SRC = transport.cpp
+SOCKET_SRC = socket.cpp
 SERVER_RUN_SRC = main.cpp
 
 PARSER_TESTS = tests/parser.cpp
+SOCKET_TESTS = tests/socket.cpp
 TESTS_INCLUDE = -Ivendor/bandit/ -I.
 
 all: server parser main parser_tests
@@ -28,8 +30,16 @@ server: parser
 parser:
 	$(CXX) -c -o build/parser.o $(CXXFLAGS) $(PARSER_SRC)
 
-transport:
+transport: socket
 	$(CXX) -c -o build/transport.o $(CXXFLAGS) $(TRANSPORT_SRC)
+
+socket:
+	$(CXX) -c -o build/socket.o $(CXXFLAGS) $(SOCKET_SRC)
+
+socket_tests: socket
+	$(CXX) -o build/tests/socket $(CXXFLAGS) $(TESTS_INCLUDE) $(SOCKET_TESTS) \
+		build/socket.o
+	build/tests/socket
 
 parser_tests: parser
 	$(CXX) -o build/tests/parser $(CXXFLAGS) \

@@ -9,6 +9,8 @@
 #include <sys/socket.h> // bind, listen, accept, connect
 #include <unistd.h>     // close, read, write
 
+#include "log.h"
+
 namespace Net
 {
 
@@ -20,14 +22,23 @@ class Socket
       INITIALIZED,
       BOUND,
       LISTENING,
+      ACCEPTED,   // a new client socket from listening socket
+      CONNECTING, // nonblocking socket when calling connect()
+      CONNECTED,
       CLOSED
+    };
+
+    enum Type {
+      BLOCKING,
+      NONBLOCKING
     };
 
     typedef uintptr_t FD;
     typedef struct sockaddr_in IPV4;
 
-    Socket(FD fd, State state = INVALID);
-    Socket();
+    Socket(FD fd, State state = INVALID, Type type = BLOCKING);
+    Socket(Type type = BLOCKING);
+    ~Socket() { close(); }
 
     int configure(const char *, int); 
     int configure(); 
@@ -36,19 +47,23 @@ class Socket
     int accept();
     int close();
 
+    int connect(const char *, int);
     int send(const char *, size_t);
     int recv(char *, size_t);
 
     State state()           { return m_state; }
+    Type type()             { return m_type; }
     int err()               { return m_err; }
-    FD fd()                 { return m_fd; };
+    FD fd()                 { return m_fd; }
 
     static void ipv4(IPV4&, const char *, int&);
   private:
     State m_state   = INVALID;
-    FD m_fd      = -1;
+    FD m_fd       = 0;
+    FD m_accepted = 0;
     int m_reuse   = 1;
     int m_backlog = 1000;
+    Type m_type   = BLOCKING;
     int m_err     = -1;
 
     IPV4 m_listen_addr;
